@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"waifuVault-go-api/pkg/mod"
 )
 
 const baseUrl = "https://waifuvault.moe"
