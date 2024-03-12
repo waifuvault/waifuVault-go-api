@@ -236,15 +236,11 @@ func checkError(response *http.Response) error {
 		var respErrorJson mod.WaifuError
 		jsonErr := json.Unmarshal(bodyBytes, &respErrorJson)
 
-		if jsonErr != nil {
+		if jsonErr == nil {
 			errStr = fmt.Sprintf("Error %d (%s): %s", respErrorJson.Status, respErrorJson.Name, respErrorJson.Message)
 		}
 
 		return errors.New(errStr)
 	}
 	return nil
-}
-
-func ToPtr[T any](x T) *T {
-	return &x
 }
