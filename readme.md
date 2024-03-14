@@ -6,7 +6,7 @@ with [waifuvault.moe](https://waifuvault.moe/). Contains a full up-to-date API f
 ## Installation
 
 ```sh
-go get github.com/waifuvault/waifuVault-go-api@v1.0.0
+go get github.com/waifuvault/waifuVault-go-api@latest
 ```
 
 ## Usage
