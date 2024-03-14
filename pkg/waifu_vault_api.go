@@ -26,7 +26,7 @@ func NewWaifuvaltApi(client http.Client) mod.Waifuvalt {
 	}
 }
 
-func (re *api) UploadFile(options mod.WaifuvaultPutOpts, ctx *context.Context) (*mod.WaifuResponse[string], error) {
+func (re *api) UploadFile(ctx context.Context, options mod.WaifuvaultPutOpts) (*mod.WaifuResponse[string], error) {
 	if options.File != nil && options.Bytes != nil && options.Url != "" || options.File == nil && options.Bytes == nil && options.Url == "" {
 		return nil, errors.New("you can only supply buffer, file or url")
 	}
@@ -75,7 +75,7 @@ func (re *api) UploadFile(options mod.WaifuvaultPutOpts, ctx *context.Context) (
 		"password":      options.Password,
 	}, "")
 
-	r, err := re.createRequest(http.MethodPut, uploadUrl, &body, writer, ctx)
+	r, err := re.createRequest(ctx, http.MethodPut, uploadUrl, &body, writer)
 	if err != nil {
 		return nil, err
 	}
@@ -86,15 +86,9 @@ func (re *api) UploadFile(options mod.WaifuvaultPutOpts, ctx *context.Context) (
 	return getResponse[string](resp)
 }
 
-func (re *api) createRequest(method, url string, body io.Reader, writer *multipart.Writer, ctx *context.Context) (*http.Request, error) {
-	var r *http.Request
-	var err error
+func (re *api) createRequest(ctx context.Context, method, url string, body io.Reader, writer *multipart.Writer) (*http.Request, error) {
 
-	if ctx != nil {
-		r, err = http.NewRequestWithContext(*ctx, method, url, body)
-	} else {
-		r, err = http.NewRequest(method, url, body)
-	}
+	r, err := http.NewRequestWithContext(ctx, method, url, body)
 
 	if err != nil {
 		return nil, err
@@ -108,38 +102,35 @@ func (re *api) createRequest(method, url string, body io.Reader, writer *multipa
 	return r, nil
 }
 
-func (re *api) FileInfo(token string, ctx *context.Context) (*mod.WaifuResponse[int], error) {
-	resp, err := re.crateGetRequestForFileInfo(token, false, ctx)
+func (re *api) FileInfo(ctx context.Context, token string) (*mod.WaifuResponse[int], error) {
+	resp, err := re.createGetRequestForFileInfo(ctx, token, false)
 	if err != nil {
 		return nil, err
 	}
 	return getResponse[int](resp)
 }
 
-func (re *api) FileInfoFormatted(token string, ctx *context.Context) (*mod.WaifuResponse[string], error) {
-	resp, err := re.crateGetRequestForFileInfo(token, true, ctx)
+func (re *api) FileInfoFormatted(ctx context.Context, token string) (*mod.WaifuResponse[string], error) {
+	resp, err := re.createGetRequestForFileInfo(ctx, token, true)
 	if err != nil {
 		return nil, err
 	}
 	return getResponse[string](resp)
 }
 
-func (re *api) crateGetRequestForFileInfo(token string, isFormatted bool, ctx *context.Context) (*http.Response, error) {
+func (re *api) createGetRequestForFileInfo(ctx context.Context, token string, isFormatted bool) (*http.Response, error) {
 	getUrl := getUrl(map[string]any{"formatted": isFormatted}, token)
-	r, err := re.createRequest(http.MethodGet, getUrl, nil, nil, ctx)
-	if err != nil {
-		return nil, err
-	}
+	r, err := re.createRequest(ctx, http.MethodGet, getUrl, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 	return re.client.Do(r)
 }
 
-func (re *api) DeleteFile(token string, ctx *context.Context) (bool, error) {
+func (re *api) DeleteFile(ctx context.Context, token string) (bool, error) {
 	deleteUrl := getUrl(nil, token)
 
-	r, err := re.createRequest(http.MethodDelete, deleteUrl, nil, nil, ctx)
+	r, err := re.createRequest(ctx, http.MethodDelete, deleteUrl, nil, nil)
 	if err != nil {
 		return false, err
 	}
@@ -159,7 +150,7 @@ func (re *api) DeleteFile(token string, ctx *context.Context) (bool, error) {
 	return bodyString == "true", nil
 }
 
-func (re *api) GetFile(options mod.GetFileInfo, ctx *context.Context) ([]byte, error) {
+func (re *api) GetFile(ctx context.Context, options mod.GetFileInfo) ([]byte, error) {
 
 	if options.Filename == "" && options.Token == "" {
 		return nil, errors.New("please supply a token or a filename")
@@ -168,15 +159,14 @@ func (re *api) GetFile(options mod.GetFileInfo, ctx *context.Context) ([]byte, e
 	if options.Filename != "" {
 		fileUrl = fmt.Sprintf("%s/f/%s", baseUrl, options.Filename)
 	} else {
-		// hidden call, context not passed
-		fileInfo, err := re.FileInfo(options.Token, nil)
+		fileInfo, err := re.FileInfo(ctx, options.Token)
 		if err != nil {
 			return nil, err
 		}
 		fileUrl = fileInfo.URL
 	}
 
-	r, err := re.createRequest(http.MethodGet, fileUrl, nil, nil, ctx)
+	r, err := re.createRequest(ctx, http.MethodGet, fileUrl, nil, nil)
 	if err != nil {
 		return nil, err
 	}

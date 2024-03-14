@@ -20,17 +20,7 @@ This API contains 4 interactions:
 
 The package is namespaced to `waifuVault`, so to import it, simply:
 
-```go
-import "github.com/waifuvault/waifuVault-go-api/pkg"
-
-// then init the API
-
-api := waifuVault.NewWaifuvaltApi(http.Client{})
-```
-
-### Contexts
-
-Each function on the Waifuvalt API takes a context. This can be `nil`
+Each function takes a context, if you are unsure what context to use, you can use `context.TODO()`
 
 ```go
 package main
@@ -46,16 +36,16 @@ import (
 func main() {
 	cx, cancel := context.WithCancel(context.Background())
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
-	file, err := api.UploadFile(waifuMod.WaifuvaultPutOpts{
+	file, err := api.UploadFile(cx, waifuMod.WaifuvaultPutOpts{
 		Url: "https://waifuvault.moe/assets/custom/images/08.png",
-	}, &cx)
+	})
 	if err != nil {
 		return
 	}
-	api.DeleteFile(file.Token, nil)
 	fmt.Printf(file.URL) // the URL
 }
 ```
+
 
 ### Upload File
 
@@ -77,6 +67,7 @@ Using a URL:
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod" // namespace mod
@@ -85,9 +76,9 @@ import (
 
 func main() {
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
-	file, err := api.UploadFile(waifuMod.WaifuvaultPutOpts{
+	file, err := api.UploadFile(context.TODO(), waifuMod.WaifuvaultPutOpts{
 		Url: "https://waifuvault.moe/assets/custom/images/08.png",
-	}, nil)
+	})
 	if err != nil {
 		return
 	}
@@ -101,6 +92,7 @@ Using Bytes:
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod"
@@ -116,10 +108,10 @@ func main() {
 		fmt.Print(err)
 	}
 
-	file, err := api.UploadFile(waifuMod.WaifuvaultPutOpts{
+	file, err := api.UploadFile(context.TODO(), waifuMod.WaifuvaultPutOpts{
 		Bytes:    &b,
 		FileName: "myCoolFile.jpg", // make sure you supply the extension
-	}, nil)
+	})
 	if err != nil {
 		return
 	}
@@ -133,6 +125,7 @@ Using a file:
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod"
@@ -148,9 +141,9 @@ func main() {
 		fmt.Print(err)
 	}
 
-	file, err := api.UploadFile(waifuMod.WaifuvaultPutOpts{
+	file, err := api.UploadFile(context.TODO(), waifuMod.WaifuvaultPutOpts{
 		File: fileStruc,
-	}, nil)
+	})
 	if err != nil {
 		return
 	}
@@ -180,6 +173,7 @@ takes the same parameters
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	"net/http"
@@ -187,7 +181,7 @@ import (
 
 func main() {
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
-	info, err := api.FileInfo("token", nil)
+	info, err := api.FileInfo(context.TODO(), "token")
 	if err != nil {
 		return
 	}
@@ -202,6 +196,7 @@ Human-readable timestamp:
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	"net/http"
@@ -209,7 +204,7 @@ import (
 
 func main() {
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
-	info, err := api.FileInfoFormatted("token", nil)
+	info, err := api.FileInfoFormatted(context.TODO(), "token")
 	if err != nil {
 		return
 	}
@@ -232,6 +227,7 @@ This function takes the following options as parameters:
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	"net/http"
@@ -239,7 +235,7 @@ import (
 
 func main() {
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
-	success, err := api.DeleteFile("token", nil)
+	success, err := api.DeleteFile(context.TODO(), "token")
 	if err != nil {
 		return
 	}
@@ -272,6 +268,7 @@ Obtain an encrypted file
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod"
@@ -282,16 +279,16 @@ func main() {
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
 
 	// upload the file
-	file, err := api.UploadFile(waifuMod.WaifuvaultPutOpts{
+	file, err := api.UploadFile(context.TODO(), waifuMod.WaifuvaultPutOpts{
 		Url:      "https://waifuvault.moe/assets/custom/images/08.png",
 		Password: "foobar",
-	}, nil)
+	})
 
 	// download the file
-	bytes, err := api.GetFile(waifuMod.GetFileInfo{
+	bytes, err := api.GetFile(context.TODO(), waifuMod.GetFileInfo{
 		Password: "foobar",
 		Token:    file.Token,
-	}, nil)
+	})
 	if err != nil {
 		return
 	}
@@ -305,6 +302,7 @@ Obtain a file from Unique identifier
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod"
@@ -314,9 +312,9 @@ import (
 func main() {
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
 
-	bytes, err := api.GetFile(waifuMod.GetFileInfo{
+	bytes, err := api.GetFile(context.TODO(), waifuMod.GetFileInfo{
 		Filename: "/1710111505084/08.png",
-	}, nil)
+	})
 	if err != nil {
 		return
 	}

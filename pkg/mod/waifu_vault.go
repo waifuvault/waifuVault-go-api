@@ -4,17 +4,17 @@ import "context"
 
 type Waifuvalt interface {
 	// UploadFile - Upload a file using a byte array, url or file
-	UploadFile(options WaifuvaultPutOpts, ctx *context.Context) (*WaifuResponse[string], error)
+	UploadFile(ctx context.Context, options WaifuvaultPutOpts) (*WaifuResponse[string], error)
 
 	// FileInfo - Obtain file info such as URL and retention period (as an epoch timestamp)
-	FileInfo(token string, ctx *context.Context) (*WaifuResponse[int], error)
+	FileInfo(ctx context.Context, token string) (*WaifuResponse[int], error)
 
 	// FileInfoFormatted - Same as FileInfo, but instead returns the retention period as a human-readable string
-	FileInfoFormatted(token string, ctx *context.Context) (*WaifuResponse[string], error)
+	FileInfoFormatted(ctx context.Context, token string) (*WaifuResponse[string], error)
 
 	// DeleteFile - Delete a file given a token
-	DeleteFile(token string, ctx *context.Context) (bool, error)
+	DeleteFile(ctx context.Context, token string) (bool, error)
 
 	// GetFile - Download the file given options and return a byte array of said file
-	GetFile(options GetFileInfo, ctx *context.Context) ([]byte, error)
+	GetFile(ctx context.Context, options GetFileInfo) ([]byte, error)
 }
