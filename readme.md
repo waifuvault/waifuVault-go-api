@@ -13,10 +13,10 @@ go get github.com/waifuvault/waifuVault-go-api@latest
 
 This API contains 4 interactions:
 
-1. Upload
-2. Delete
-3. get file info
-4. get file
+1. [Upload File](#upload-file)
+2. [Get File Info](#get-file-info)
+3. [Delete File](#delete-file)
+4. [Get File](#get-file)
 
 The package is namespaced to `waifuVault`, so to import it, simply:
 
@@ -47,7 +47,7 @@ func main() {
 ```
 
 
-### Upload File
+### Upload File<a id="upload-file"></a>
 
 To Upload a file, use the `UploadFile` function. This function takes the following options as struct:
 
@@ -151,7 +151,7 @@ func main() {
 }
 ```
 
-### File Info
+### Get File Info<a id="get-file-info"></a>
 
 If you have a token from your upload. Then you can get file info. This results in the following info:
 
@@ -213,7 +213,7 @@ func main() {
 }
 ```
 
-### Delete File
+### Delete File<a id="delete-file"></a>
 
 To delete a file, you must supply your token to the `DeleteFile` function.
 
@@ -243,7 +243,7 @@ func main() {
 }
 ```
 
-### Get File
+### Get File<a id="get-file"></a>
 
 This lib also supports obtaining a file from the API as a Byte Array by supplying either the token or the unique
 identifier
