@@ -223,6 +223,8 @@ This function takes the following options as parameters:
 |---------|----------|------------------------------------------|----------|------------|
 | `token` | `string` | The token of the file you wish to delete | true     |            |
 
+> **NOTE:** `deleteFile` will only ever either return `true` or throw an exception if the token is invalid
+
 ```go
 package main
 
