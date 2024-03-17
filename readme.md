@@ -241,7 +241,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	fmt.Print(success) // true or false
+	fmt.Print(success)
 }
 ```
 
