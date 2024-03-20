@@ -194,6 +194,24 @@ func (re *api) GetFile(ctx context.Context, options mod.GetFileInfo) ([]byte, er
 	return io.ReadAll(resp.Body)
 }
 
+func (re *api) ModifyFile(ctx context.Context, token string, options mod.ModifyEntryPayload) (*mod.WaifuResponse[int], error) {
+	uploadUrl := getUrl(nil, token)
+
+	jsonData, err := json.Marshal(options)
+	if err != nil {
+		return nil, err
+	}
+	r, err := re.createRequest(ctx, http.MethodPatch, uploadUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := re.client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	return getResponse[int](resp)
+}
+
 func getUrl(obj map[string]any, path string) string {
 	baseRestUrl := fmt.Sprintf("%s/rest", baseUrl)
 	if path != "" {
