@@ -17,4 +17,7 @@ type Waifuvalt interface {
 
 	// GetFile - Download the file given options and return a byte array of said file
 	GetFile(ctx context.Context, options GetFileInfo) ([]byte, error)
+
+	// ModifyFile - modify an entry
+	ModifyFile(ctx context.Context, token string, options ModifyEntryPayload) (*WaifuResponse[int], error)
 }

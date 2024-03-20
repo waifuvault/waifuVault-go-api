@@ -17,6 +17,7 @@ This API contains 4 interactions:
 2. [Get File Info](#get-file-info)
 3. [Delete File](#delete-file)
 4. [Get File](#get-file)
+5. [Modify Entry](#modify-entry)
 
 The package is namespaced to `waifuVault`, so to import it, simply:
 
@@ -45,7 +46,6 @@ func main() {
 	fmt.Printf(file.URL) // the URL
 }
 ```
-
 
 ### Upload File<a id="upload-file"></a>
 
@@ -321,5 +321,151 @@ func main() {
 		return
 	}
 	fmt.Print(bytes) // byte array
+}
+```
+
+### Modify Entry<a id="modify-entry"></a>
+
+If you want to modify aspects of your entry such as password, removing password, decrypting the file, encrypting the
+file, changing the expiry, etc. you can use `ModifyFile` function
+
+Use the `ModifyFile` function. This function takes the following options an object and one as a parameter:
+
+| parameter | Type     | Description                              | Required |
+|-----------|----------|------------------------------------------|----------|
+| `token`   | `string` | The token of the file you want to modify | true     |
+
+Options:
+
+| Option             | Type      | Description                                                                                              | Required                                                           | Extra info                                                                             |
+|--------------------|-----------|----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `Password`         | `*string` | The new password or the password you want to use to encrypt the file                                     | false                                                              |                                                                                        |
+| `PreviousPassword` | `*string` | If the file is currently protected or encrpyted and you want to change it, use this for the old password | true only if `password` is set and the file is currently protected | if the file is protected already and you want to change the password, this MUST be set |
+| `CustomExpiry`     | `*string` | a new custom expiry, see `Expires` in `UploadFile`                                                       | false                                                              |                                                                                        |
+| `HideFilename`     | `*bool`   | make the filename hidden                                                                                 | false                                                              |                                                                                        |
+
+to use this, it is needed that you use a toPtr function as this struct contains pointers:
+
+```go
+package main
+
+func ToPtr[T any](x T) *T {
+	return &x
+}
+```
+
+Set a password on a non-encrypted file:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
+	"net/http"
+)
+
+func main() {
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+	aa, err := api.ModifyFile(context.TODO(), "eb1fe7c9-4e55-4d73-bcb9-6d1906ec9e2c", mod.ModifyEntryPayload{
+		Password: ToPtr("foo"),
+	})
+
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(aa.Protected) // true
+}
+func ToPtr[T any](x T) *T {
+	return &x
+}
+```
+
+Change a password:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
+	"net/http"
+)
+
+func main() {
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+	aa, err := api.ModifyFile(context.TODO(), "eb1fe7c9-4e55-4d73-bcb9-6d1906ec9e2c", mod.ModifyEntryPayload{
+		Password:         ToPtr("updated"),
+		PreviousPassword: ToPtr("foo"),
+	})
+
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(aa.Protected) // true
+}
+func ToPtr[T any](x T) *T {
+	return &x
+}
+```
+
+change expire:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
+	"net/http"
+)
+
+func main() {
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+	_, err := api.ModifyFile(context.TODO(), "eb1fe7c9-4e55-4d73-bcb9-6d1906ec9e2c", mod.ModifyEntryPayload{
+		CustomExpiry: ToPtr("1d"),
+	})
+	if err != nil {
+		fmt.Print(err)
+	}
+}
+func ToPtr[T any](x T) *T {
+	return &x
+}
+```
+
+decrypt a file and remove the password:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
+	"net/http"
+)
+
+func main() {
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+	aa, err := api.ModifyFile(context.TODO(), "eb1fe7c9-4e55-4d73-bcb9-6d1906ec9e2c", mod.ModifyEntryPayload{
+		Password:         ToPtr(""),
+		PreviousPassword: ToPtr("foo"),
+	})
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(aa.Protected) // false
+}
+
+func ToPtr[T any](x T) *T {
+	return &x
 }
 ```
