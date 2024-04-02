@@ -70,9 +70,10 @@ func (re *api) UploadFile(ctx context.Context, options mod.WaifuvaultPutOpts) (*
 	}
 
 	uploadUrl := getUrl(map[string]any{
-		"expires":       options.Expires,
-		"hide_filename": options.HideFilename,
-		"password":      options.Password,
+		"expires":           options.Expires,
+		"hide_filename":     options.HideFilename,
+		"password":          options.Password,
+		"one_time_download": options.OneTimeDownload,
 	}, "")
 
 	r, err := re.createRequest(ctx, http.MethodPut, uploadUrl, &body, writer)

@@ -26,4 +26,7 @@ type WaifuvaultPutOpts struct {
 
 	// The filename if `Bytes` is used
 	FileName string
+
+	// If this is true, then the file will be deleted as soon as it is accessed
+	OneTimeDownload bool `json:"oneTimeDownload"`
 }
