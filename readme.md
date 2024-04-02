@@ -1,4 +1,4 @@
-# waifuvault-node-api
+# waifuvault-go-api
 
 This contains the official API bindings for uploading, deleting and obtaining files
 with [waifuvault.moe](https://waifuvault.moe/). Contains a full up-to-date API for interacting with the service
@@ -51,15 +51,16 @@ func main() {
 
 To Upload a file, use the `UploadFile` function. This function takes the following options as struct:
 
-| Option         | Type       | Description                                                               | Required                                       | Extra info                                                                        |
-|----------------|------------|---------------------------------------------------------------------------|------------------------------------------------|-----------------------------------------------------------------------------------|
-| `File`         | `*os.File` | The file to upload. This is an *os.File                                   | true only if `Url` or `Bytes` is not supplied  | If `Url` or `Bytes` is supplied, this prop can't be set                           |
-| `Url`          | `string`   | The URL to a file that exists on the internet                             | true only if `File` or `Bytes` is not supplied | If `File` or `Bytes` is supplied, this prop can't be set                          |
-| `Bytes`        | `*[]byte`  | The raw Bytes to of the file to upload.                                   | true only if `File` or `Url` is not supplied   | If `File` or `Url` is supplied, this prop can't be set and `FileName` MUST be set |
-| `Expires`      | `string`   | A string containing a number and a unit (1d = 1day)                       | false                                          | Valid units are `m`, `h` and `d`                                                  |
-| `HideFilename` | `bool`     | If true, then the uploaded filename won't appear in the URL               | false                                          | Defaults to `false`                                                               |
-| `Password`     | `string`   | If set, then the uploaded file will be encrypted                          | false                                          |                                                                                   |
-| `FileName`     | `string`   | Only used if `Bytes` is set, this will be the filename used in the upload | true only if `Bytes` is set                    |                                                                                   |
+| Option            | Type       | Description                                                               | Required                                       | Extra info                                                                        |
+|-------------------|------------|---------------------------------------------------------------------------|------------------------------------------------|-----------------------------------------------------------------------------------|
+| `File`            | `*os.File` | The file to upload. This is an *os.File                                   | true only if `Url` or `Bytes` is not supplied  | If `Url` or `Bytes` is supplied, this prop can't be set                           |
+| `Url`             | `string`   | The URL to a file that exists on the internet                             | true only if `File` or `Bytes` is not supplied | If `File` or `Bytes` is supplied, this prop can't be set                          |
+| `Bytes`           | `*[]byte`  | The raw Bytes to of the file to upload.                                   | true only if `File` or `Url` is not supplied   | If `File` or `Url` is supplied, this prop can't be set and `FileName` MUST be set |
+| `Expires`         | `string`   | A string containing a number and a unit (1d = 1day)                       | false                                          | Valid units are `m`, `h` and `d`                                                  |
+| `HideFilename`    | `bool`     | If true, then the uploaded filename won't appear in the URL               | false                                          | Defaults to `false`                                                               |
+| `Password`        | `string`   | If set, then the uploaded file will be encrypted                          | false                                          |                                                                                   |
+| `FileName`        | `string`   | Only used if `Bytes` is set, this will be the filename used in the upload | true only if `Bytes` is set                    |                                                                                   |
+| `OneTimeDownload` | `bool`     | if supplied, the file will be deleted as soon as it is accessed           | false                                          |                                                                                   |
 
 Using a URL:
 
