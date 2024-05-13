@@ -35,8 +35,9 @@ func (re *api) UploadFile(ctx context.Context, options mod.WaifuvaultPutOpts) (*
 	if options.File != nil || options.Bytes != nil {
 
 		var fileBytes *bytes.Buffer
-		var w io.Writer
+		var fileFormWriter io.Writer
 		var err error
+
 		writer = multipart.NewWriter(&body)
 		if options.File != nil {
 			fileBytes = bytes.NewBuffer(nil)
@@ -44,20 +45,31 @@ func (re *api) UploadFile(ctx context.Context, options mod.WaifuvaultPutOpts) (*
 			if err != nil {
 				return nil, err
 			}
-			w, err = writer.CreateFormFile("file", filepath.Base(options.File.Name()))
+			fileFormWriter, err = writer.CreateFormFile("file", filepath.Base(options.File.Name()))
+
 		} else {
 			fileBytes = bytes.NewBuffer(*options.Bytes)
 			if options.FileName == "" {
 				return nil, errors.New("FileName must be set if bytes is used")
 			}
-			w, err = writer.CreateFormFile("file", options.FileName)
+			fileFormWriter, err = writer.CreateFormFile("file", options.FileName)
+		}
+
+		if options.Password != "" {
+			passwordFormWriter, err := writer.CreateFormField("password")
+			if err != nil {
+				return nil, err
+			}
+			if _, err = passwordFormWriter.Write([]byte(options.Password)); err != nil {
+				return nil, err
+			}
 		}
 
 		if err != nil {
 			return nil, err
 		}
 
-		if _, err = w.Write(fileBytes.Bytes()); err != nil {
+		if _, err = fileFormWriter.Write(fileBytes.Bytes()); err != nil {
 			return nil, err
 		}
 		err = writer.Close()
@@ -65,14 +77,18 @@ func (re *api) UploadFile(ctx context.Context, options mod.WaifuvaultPutOpts) (*
 			return nil, err
 		}
 	} else if options.Url != "" {
-		bodyUrl := fmt.Sprintf(`{"url": "%s"}`, options.Url)
+		var bodyUrl string
+		if options.Password != "" {
+			bodyUrl = fmt.Sprintf(`{"url": "%s", "password": "%s"}`, options.Url, options.Password)
+		} else {
+			bodyUrl = fmt.Sprintf(`{"url": "%s"}`, options.Url)
+		}
 		body = *bytes.NewBuffer([]byte(bodyUrl))
 	}
 
 	uploadUrl := getUrl(map[string]any{
 		"expires":           options.Expires,
 		"hide_filename":     options.HideFilename,
-		"password":          options.Password,
 		"one_time_download": options.OneTimeDownload,
 	}, "")
 
