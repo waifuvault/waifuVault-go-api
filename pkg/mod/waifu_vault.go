@@ -20,4 +20,13 @@ type Waifuvalt interface {
 
 	// ModifyFile - modify an entry
 	ModifyFile(ctx context.Context, token string, options ModifyEntryPayload) (*WaifuResponse[int], error)
+
+	// CreateBucket - create a new bucket, buckets are bound to your IP, so you may only have one bucket per IP
+	CreateBucket(ctx context.Context) (*WaifuBucket, error)
+
+	// GetBucket - Get a bucket and all the files it contains
+	GetBucket(ctx context.Context, token string) (*WaifuBucket, error)
+
+	// DeleteBucket - Delete a bucket and all files it contains
+	DeleteBucket(ctx context.Context, token string) (bool, error)
 }

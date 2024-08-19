@@ -18,6 +18,9 @@ This API contains 4 interactions:
 3. [Delete File](#delete-file)
 4. [Get File](#get-file)
 5. [Modify Entry](#modify-entry)
+6. [Create Bucket](#create-bucket)
+7. [Get Bucket](#get-bucket)
+8. [Delete Bucket](#delete-bucket)
 
 The package is namespaced to `waifuVault`, so to import it, simply:
 
@@ -468,5 +471,114 @@ func main() {
 
 func ToPtr[T any](x T) *T {
 	return &x
+}
+```
+
+### Create bucket<a id="create-bucket"></a>
+
+Buckets are virtual collections that are linked to your IP and a token. When you create a bucket, you will receive a
+bucket token that you can use in [Get Bucket](#get-bucket) to get all the files in that bucket
+
+To create a bucket, use the `CreateBucket` function. This function does not take any arguments.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+	resp, err := api.CreateBucket(cx)
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(resp.Token) // the bucket token
+}
+```
+
+### Get Bucket<a id="get-bucket"></a>
+
+To get a bucket, you must use the `GetBucket` function and supply the token.
+This function takes the following options as parameters:
+
+| Parameter | Type     | Description             | Required | Extra info |
+|-----------|----------|-------------------------|----------|------------|
+| `token`   | `string` | The token of the bucket | true     |            |
+
+This will respond with the bucket and all the files the bucket contains.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// create the bucket
+	resp, err := api.CreateBucket(cx)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// get the bucket
+	bucket, err := api.GetBucket(cx, resp.Token)
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(bucket.Files) // all the files in the bucket
+}
+```
+
+### Delete Bucket<a id="delete-bucket"></a>
+
+Deleting a bucket will delete the bucket and all the files it contains.
+
+To delete a bucket, you must call the `DeleteBucket` function with the following options as parameters:
+
+| Parameter | Type     | Description                       | Required | Extra info |
+|-----------|----------|-----------------------------------|----------|------------|
+| `token`   | `string` | The token of the bucket to delete | true     |            |
+
+> **NOTE:** `DeleteBucket` will only ever either return `true` or throw an exception if the token is invalid
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// create the bucket
+	resp, err := api.CreateBucket(cx)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// delete the bucket
+	delResp, err := api.DeleteBucket(cx, resp.Token)
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(delResp) // true
 }
 ```
