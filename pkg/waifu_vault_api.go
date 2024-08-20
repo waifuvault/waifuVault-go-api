@@ -227,7 +227,7 @@ func (re *api) ModifyFile(ctx context.Context, token string, options mod.ModifyE
 }
 
 func (re *api) CreateBucket(ctx context.Context) (*mod.WaifuBucket, error) {
-	restUrl := baseUrl + "/rest/bucket/createBucket"
+	restUrl := baseUrl + "/rest/bucket/create"
 	r, err := re.createRequest(ctx, http.MethodGet, restUrl, nil, nil)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (re *api) CreateBucket(ctx context.Context) (*mod.WaifuBucket, error) {
 }
 
 func (re *api) GetBucket(ctx context.Context, token string) (*mod.WaifuBucket, error) {
-	restUrl := baseUrl + "/rest/bucket"
+	restUrl := baseUrl + "/rest/bucket/get"
 	type payload struct {
 		BucketToken string `json:"bucket_token"`
 	}
