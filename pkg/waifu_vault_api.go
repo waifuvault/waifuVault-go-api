@@ -90,7 +90,7 @@ func (re *api) UploadFile(ctx context.Context, options mod.WaifuvaultPutOpts) (*
 		"expires":           options.Expires,
 		"hide_filename":     options.HideFilename,
 		"one_time_download": options.OneTimeDownload,
-	}, "")
+	}, options.BucketToken)
 
 	r, err := re.createRequest(ctx, http.MethodPut, uploadUrl, &body, writer)
 	if err != nil {
@@ -155,9 +155,6 @@ func (re *api) DeleteFile(ctx context.Context, token string) (bool, error) {
 	defer resp.Body.Close()
 
 	err = checkError(resp)
-	if err != nil {
-		return false, err
-	}
 	if err != nil {
 		return false, err
 	}
@@ -229,6 +226,54 @@ func (re *api) ModifyFile(ctx context.Context, token string, options mod.ModifyE
 	return getResponse[int](resp)
 }
 
+func (re *api) CreateBucket(ctx context.Context) (*mod.WaifuBucket, error) {
+	restUrl := baseUrl + "/rest/bucket/createBucket"
+	r, err := re.createRequest(ctx, http.MethodGet, restUrl, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := re.client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	return getBucketResponse(resp)
+}
+
+func (re *api) GetBucket(ctx context.Context, token string) (*mod.WaifuBucket, error) {
+	restUrl := baseUrl + "/rest/bucket"
+	type payload struct {
+		BucketToken string `json:"bucket_token"`
+	}
+	jsonData, err := json.Marshal(&payload{token})
+	r, err := re.createRequest(ctx, http.MethodPost, restUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := re.client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	return getBucketResponse(resp)
+}
+
+func (re *api) DeleteBucket(ctx context.Context, token string) (bool, error) {
+	deleteUrl := baseUrl + "/rest/bucket/" + token
+	r, err := re.createRequest(ctx, http.MethodDelete, deleteUrl, nil, nil)
+	if err != nil {
+		return false, err
+	}
+	resp, err := re.client.Do(r)
+	defer resp.Body.Close()
+	err = checkError(resp)
+	if err != nil {
+		return false, err
+	}
+	bodyBytes, err := io.ReadAll(resp.Body)
+	bodyString := string(bodyBytes)
+
+	return bodyString == "true", nil
+}
+
 func getUrl(obj map[string]any, path string) string {
 	baseRestUrl := fmt.Sprintf("%s/rest", baseUrl)
 	if path != "" {
@@ -253,19 +298,29 @@ func getUrl(obj map[string]any, path string) string {
 	return baseRestUrl
 }
 
+func getBucketResponse(response *http.Response) (*mod.WaifuBucket, error) {
+	return readResponse(response, mod.WaifuBucket{})
+}
+
 func getResponse[T string | int](response *http.Response) (*mod.WaifuResponse[T], error) {
+	return readResponse(response, mod.WaifuResponse[T]{})
+}
+
+func readResponse[T any](response *http.Response, target T) (*T, error) {
 	defer response.Body.Close()
 	err := checkError(response)
 	if err != nil {
 		return nil, err
 	}
-	bodyBytes, _ := io.ReadAll(response.Body)
-	var target = &mod.WaifuResponse[T]{}
-	err = json.Unmarshal(bodyBytes, target)
+	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
-	return target, nil
+	err = json.Unmarshal(bodyBytes, &target)
+	if err != nil {
+		return nil, err
+	}
+	return &target, nil
 }
 
 func checkError(response *http.Response) error {

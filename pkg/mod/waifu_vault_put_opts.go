@@ -29,4 +29,7 @@ type WaifuvaultPutOpts struct {
 
 	// If this is true, then the file will be deleted as soon as it is accessed
 	OneTimeDownload bool `json:"oneTimeDownload"`
+
+	// If supplied, this file will be associated to that bucket
+	BucketToken string
 }
