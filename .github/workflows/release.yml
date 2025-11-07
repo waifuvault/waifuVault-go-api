@@ -1,0 +1,94 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Get latest tag
+      id: get_latest_tag
+      run: |
+        git fetch --tags
+        LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
+        if [ -z "$LATEST_TAG" ]; then
+          LATEST_TAG="v0.0.0"
+        fi
+        echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+        echo "Latest tag: $LATEST_TAG"
+
+    - name: Bump version
+      id: bump_version
+      run: |
+        LATEST_TAG="${{ steps.get_latest_tag.outputs.latest_tag }}"
+        # Remove 'v' prefix
+        VERSION=${LATEST_TAG#v}
+        # Split version into array
+        IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
+        MAJOR=${VERSION_PARTS[0]}
+        MINOR=${VERSION_PARTS[1]}
+        PATCH=${VERSION_PARTS[2]}
+
+        # Check commit message for version bump type
+        COMMIT_MSG=$(git log -1 --pretty=%B)
+        if [[ $COMMIT_MSG == *"BREAKING CHANGE"* ]] || [[ $COMMIT_MSG == *"major:"* ]]; then
+          MAJOR=$((MAJOR + 1))
+          MINOR=0
+          PATCH=0
+        elif [[ $COMMIT_MSG == *"feat:"* ]] || [[ $COMMIT_MSG == *"minor:"* ]]; then
+          MINOR=$((MINOR + 1))
+          PATCH=0
+        else
+          PATCH=$((PATCH + 1))
+        fi
+
+        NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "New version: $NEW_VERSION"
+
+    - name: Create and push tag
+      run: |
+        NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a $NEW_VERSION -m "Release $NEW_VERSION"
+        git push origin $NEW_VERSION
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        LATEST_TAG="${{ steps.get_latest_tag.outputs.latest_tag }}"
+        NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+
+        # Get commits since last tag
+        if [ "$LATEST_TAG" = "v0.0.0" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+        else
+          CHANGELOG=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+        fi
+
+        # Write changelog to file for multiline support
+        echo "$CHANGELOG" > changelog.txt
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.bump_version.outputs.new_version }}
+        name: Release ${{ steps.bump_version.outputs.new_version }}
+        body_path: changelog.txt
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
