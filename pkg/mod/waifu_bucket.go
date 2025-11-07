@@ -6,4 +6,7 @@ type WaifuBucket struct {
 
 	// The files contained in this bucket
 	Files []WaifuResponse[int] `json:"files"`
+
+	// Albums contained in this bucket
+	Albums []AlbumStub `json:"albums"`
 }

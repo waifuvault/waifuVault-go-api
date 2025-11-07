@@ -11,7 +11,7 @@ go get github.com/waifuvault/waifuVault-go-api@latest
 
 ## Usage
 
-This API contains 4 interactions:
+This API contains the following interactions:
 
 1. [Upload File](#upload-file)
 2. [Get File Info](#get-file-info)
@@ -21,6 +21,14 @@ This API contains 4 interactions:
 6. [Create Bucket](#create-bucket)
 7. [Get Bucket](#get-bucket)
 8. [Delete Bucket](#delete-bucket)
+9. [Create Album](#create-album)
+10. [Associate Files](#associate-files)
+11. [Disassociate Files](#disassociate-files)
+12. [Get Album](#get-album)
+13. [Delete Album](#delete-album)
+14. [Share Album](#share-album)
+15. [Revoke Album](#revoke-album)
+16. [Download Album](#download-album)
 
 The package is namespaced to `waifuVault`, so to import it, simply:
 
@@ -580,5 +588,346 @@ func main() {
 		fmt.Print(err)
 	}
 	fmt.Print(delResp) // true
+}
+```
+
+### Create Album<a id="create-album"></a>
+
+Albums are public collections of files that can be shared with others in a read-only fashion. Albums must be created in a bucket and can only contain files from the same bucket.
+
+To create an album, use the `CreateAlbum` function. This function takes the following options as struct:
+
+| Option        | Type     | Description                                | Required | Extra info |
+|---------------|----------|--------------------------------------------|----------|------------|
+| `Name`        | `string` | The name of the album                      | true     |            |
+| `BucketToken` | `string` | The bucket this album will be created in   | true     |            |
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// create a bucket first
+	bucket, err := api.CreateBucket(cx)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// create an album in the bucket
+	album, err := api.CreateAlbum(cx, mod.WaifuAlbumCreateBody{
+		Name:        "My Cool Album",
+		BucketToken: bucket.Token,
+	})
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(album.Token) // the album token
+}
+```
+
+### Associate Files<a id="associate-files"></a>
+
+Associate files with an album. The album must exist, and the files must be in the same bucket as the album.
+
+Use the `AssociateFiles` function. This function takes the following options as parameters:
+
+| Parameter           | Type       | Description                          | Required | Extra info |
+|---------------------|------------|--------------------------------------|----------|------------|
+| `albumToken`        | `string`   | The album token to associate files to| true     |            |
+| `filesToAssociate`  | `[]string` | The file tokens to associate         | true     |            |
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// create a bucket
+	bucket, err := api.CreateBucket(cx)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// upload a file to the bucket
+	file, err := api.UploadFile(cx, mod.WaifuvaultPutOpts{
+		Url:         "https://waifuvault.moe/assets/custom/images/08.png",
+		BucketToken: bucket.Token,
+	})
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// create an album
+	album, err := api.CreateAlbum(cx, mod.WaifuAlbumCreateBody{
+		Name:        "My Album",
+		BucketToken: bucket.Token,
+	})
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// associate the file with the album
+	updatedAlbum, err := api.AssociateFiles(cx, album.Token, []string{file.Token})
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(updatedAlbum.Files) // the files in the album
+}
+```
+
+### Disassociate Files<a id="disassociate-files"></a>
+
+Remove files from an album. This does not delete the files, it only removes them from the album.
+
+Use the `DisassociateFiles` function. This function takes the following options as parameters:
+
+| Parameter              | Type       | Description                               | Required | Extra info |
+|------------------------|------------|-------------------------------------------|----------|------------|
+| `albumToken`           | `string`   | The album token to remove files from      | true     |            |
+| `filesToDisassociate`  | `[]string` | The file tokens to remove from the album  | true     |            |
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// disassociate files from the album
+	updatedAlbum, err := api.DisassociateFiles(cx, "album-token", []string{"file-token"})
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(updatedAlbum.Files) // the remaining files in the album
+}
+```
+
+### Get Album<a id="get-album"></a>
+
+Get an album and all of its files.
+
+Use the `GetAlbum` function. This function takes the following options as parameters:
+
+| Parameter    | Type     | Description                     | Required | Extra info |
+|--------------|----------|---------------------------------|----------|------------|
+| `albumToken` | `string` | The private token of the album  | true     |            |
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	album, err := api.GetAlbum(cx, "album-token")
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(album.Files) // all the files in the album
+	fmt.Print(album.Name)  // the name of the album
+}
+```
+
+### Delete Album<a id="delete-album"></a>
+
+Deletes an album and optionally, deletes all associated files with the album.
+
+Use the `DeleteAlbum` function. This function takes the following options as parameters:
+
+| Parameter     | Type     | Description                                                                                          | Required | Extra info |
+|---------------|----------|------------------------------------------------------------------------------------------------------|----------|------------|
+| `albumToken`  | `string` | The album token to delete                                                                            | true     |            |
+| `deleteFiles` | `bool`   | If true, this will physically delete the files from WaifuVault, if false, it will only disassociate them | true     |            |
+
+> **NOTE:** Setting `deleteFiles` to `false` will keep the files in the bucket but remove them from the album
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// delete album but keep the files
+	resp, err := api.DeleteAlbum(cx, "album-token", false)
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(resp.Success) // true
+}
+```
+
+### Share Album<a id="share-album"></a>
+
+Sharing an album makes it so others can see it in a read-only view. This returns a public URL that can be shared.
+
+Use the `ShareAlbum` function. This function takes the following options as parameters:
+
+| Parameter    | Type     | Description                    | Required | Extra info |
+|--------------|----------|--------------------------------|----------|------------|
+| `albumToken` | `string` | The private album token to share | true   |            |
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	publicUrl, err := api.ShareAlbum(cx, "album-token")
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(publicUrl) // the public URL to view the album
+}
+```
+
+### Revoke Album<a id="revoke-album"></a>
+
+Revoking an album invalidates the URL used to view it and makes it private.
+
+Use the `RevokeAlbum` function. This function takes the following options as parameters:
+
+| Parameter    | Type     | Description                     | Required | Extra info |
+|--------------|----------|---------------------------------|----------|------------|
+| `albumToken` | `string` | The private album token to revoke | true   |            |
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	resp, err := api.RevokeAlbum(cx, "album-token")
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Print(resp.Success) // true
+}
+```
+
+### Download Album<a id="download-album"></a>
+
+Download an album or selected files from an album. This returns a ZIP file as bytes.
+
+Use the `DownloadAlbum` function. This function takes the following options as parameters:
+
+| Parameter    | Type     | Description                                                    | Required | Extra info                                     |
+|--------------|----------|----------------------------------------------------------------|----------|------------------------------------------------|
+| `albumToken` | `string` | The public OR private album token                              | true     |                                                |
+| `files`      | `[]int`  | The file IDs you want to download, omit for the whole album    | false    | If empty slice, the whole album will be downloaded |
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// download the whole album
+	zipBytes, err := api.DownloadAlbum(cx, "album-token", []int{})
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// save the zip file
+	err = os.WriteFile("album.zip", zipBytes, 0644)
+	if err != nil {
+		fmt.Print(err)
+	}
+}
+```
+
+Download specific files from an album:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
+	"net/http"
+)
+
+func main() {
+	cx := context.Background()
+	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	// download only specific files by their IDs
+	zipBytes, err := api.DownloadAlbum(cx, "album-token", []int{1, 2, 3})
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	// save the zip file
+	err = os.WriteFile("album-partial.zip", zipBytes, 0644)
+	if err != nil {
+		fmt.Print(err)
+	}
 }
 ```

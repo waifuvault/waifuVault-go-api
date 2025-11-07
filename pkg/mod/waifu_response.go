@@ -19,4 +19,10 @@ type WaifuResponse[T string | int] struct {
 
 	// Bucket - the bucket this belongs to
 	Bucket string `json:"bucket"`
+
+	// ID is the public ID of this file
+	ID int `json:"id"`
+
+	// Views is how many people have downloaded this file
+	Views int `json:"views"`
 }
