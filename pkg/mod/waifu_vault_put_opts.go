@@ -21,9 +21,6 @@ type WaifuvaultPutOpts struct {
 	// the raw bytes of the file
 	Bytes *[]byte
 
-	//An url to the file you want uploaded
-	Url string
-
 	// The filename if `Bytes` is used
 	FileName string
 

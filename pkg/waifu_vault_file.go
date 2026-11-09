@@ -15,63 +15,54 @@ import (
 )
 
 func (re *api) UploadFile(ctx context.Context, options mod.WaifuvaultPutOpts) (*mod.WaifuResponse[string], error) {
-	if options.File != nil && options.Bytes != nil && options.Url != "" || options.File == nil && options.Bytes == nil && options.Url == "" {
-		return nil, errors.New("you can only supply buffer, file or url")
+	if options.File != nil && options.Bytes != nil || options.File == nil && options.Bytes == nil {
+		return nil, errors.New("you can only supply buffer or file")
 	}
+
 	body := bytes.Buffer{}
-	var writer *multipart.Writer
-	if options.File != nil || options.Bytes != nil {
+	writer := multipart.NewWriter(&body)
 
-		var fileBytes *bytes.Buffer
-		var fileFormWriter io.Writer
-		var err error
+	var fileBytes *bytes.Buffer
+	var fileFormWriter io.Writer
+	var err error
 
-		writer = multipart.NewWriter(&body)
-		if options.File != nil {
-			fileBytes = bytes.NewBuffer(nil)
-			_, err = io.Copy(fileBytes, options.File)
-			if err != nil {
-				return nil, err
-			}
-			fileFormWriter, err = writer.CreateFormFile("file", filepath.Base(options.File.Name()))
-
-		} else {
-			fileBytes = bytes.NewBuffer(*options.Bytes)
-			if options.FileName == "" {
-				return nil, errors.New("FileName must be set if bytes is used")
-			}
-			fileFormWriter, err = writer.CreateFormFile("file", options.FileName)
-		}
-
-		if options.Password != "" {
-			passwordFormWriter, err := writer.CreateFormField("password")
-			if err != nil {
-				return nil, err
-			}
-			if _, err = passwordFormWriter.Write([]byte(options.Password)); err != nil {
-				return nil, err
-			}
-		}
-
+	if options.File != nil {
+		fileBytes = bytes.NewBuffer(nil)
+		_, err = io.Copy(fileBytes, options.File)
 		if err != nil {
 			return nil, err
 		}
+		fileFormWriter, err = writer.CreateFormFile("file", filepath.Base(options.File.Name()))
 
-		if _, err = fileFormWriter.Write(fileBytes.Bytes()); err != nil {
-			return nil, err
+	} else {
+		fileBytes = bytes.NewBuffer(*options.Bytes)
+		if options.FileName == "" {
+			return nil, errors.New("FileName must be set if bytes is used")
 		}
-		err = writer.Close()
+		fileFormWriter, err = writer.CreateFormFile("file", options.FileName)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = fileFormWriter.Write(fileBytes.Bytes()); err != nil {
+		return nil, err
+	}
+
+	if options.Password != "" {
+		passwordFormWriter, err := writer.CreateFormField("password")
 		if err != nil {
 			return nil, err
 		}
-	} else if options.Url != "" {
-		var bodyUrl string
-		if options.Password != "" {
-			bodyUrl = fmt.Sprintf(`{"url": "%s", "password": "%s"}`, options.Url, options.Password)
-		} else {
-			bodyUrl = fmt.Sprintf(`{"url": "%s"}`, options.Url)
+		if _, err = passwordFormWriter.Write([]byte(options.Password)); err != nil {
+			return nil, err
 		}
-		body = *bytes.NewBuffer([]byte(bodyUrl))
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return nil, err
 	}
 
 	uploadUrl := getUrl(map[string]any{

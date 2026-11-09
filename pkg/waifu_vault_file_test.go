@@ -46,33 +46,6 @@ func TestUploadFile(t *testing.T) {
 		}
 	})
 
-	t.Run("should upload a file from URL", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method != http.MethodPut {
-				t.Errorf("Expected PUT request, got %s", r.Method)
-			}
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(WaifuResponseMock2)
-		}))
-		defer server.Close()
-
-		origBaseUrl := baseUrl
-		defer func() { baseUrl = origBaseUrl }()
-		baseUrl = server.URL
-
-		api := NewWaifuvaltApi(http.Client{})
-		result, err := api.UploadFile(ctx, mod.WaifuvaultPutOpts{
-			Url: "https://example.com/file.txt",
-		})
-
-		if err != nil {
-			t.Fatalf("UploadFile failed: %v", err)
-		}
-		if result.Token != WaifuResponseMock2.Token {
-			t.Errorf("Expected token %s, got %s", WaifuResponseMock2.Token, result.Token)
-		}
-	})
-
 	t.Run("should upload with options", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method != http.MethodPut {
@@ -96,8 +69,10 @@ func TestUploadFile(t *testing.T) {
 		baseUrl = server.URL
 
 		api := NewWaifuvaltApi(http.Client{})
+		fileBytes := []byte("test content")
 		result, err := api.UploadFile(ctx, mod.WaifuvaultPutOpts{
-			Url:          "https://example.com/file.txt",
+			Bytes:        &fileBytes,
+			FileName:     "test.txt",
 			Password:     "foo",
 			HideFilename: true,
 			Expires:      "2d",
@@ -123,8 +98,10 @@ func TestUploadFile(t *testing.T) {
 		baseUrl = server.URL
 
 		api := NewWaifuvaltApi(http.Client{})
+		fileBytes := []byte("test content")
 		_, err := api.UploadFile(ctx, mod.WaifuvaultPutOpts{
-			Url: "https://example.com/file.txt",
+			Bytes:    &fileBytes,
+			FileName: "test.txt",
 		})
 
 		if err == nil {
