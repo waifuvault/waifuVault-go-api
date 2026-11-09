@@ -43,13 +43,20 @@ import (
 	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
 	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod" // namespace mod
 	"net/http"
+	"os"
 )
 
 func main() {
 	cx, cancel := context.WithCancel(context.Background())
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
+
+	fileStruc, err := os.Open("myCoolFile.jpg")
+	if err != nil {
+		fmt.Print(err)
+	}
+
 	file, err := api.UploadFile(cx, waifuMod.WaifuvaultPutOpts{
-		Url: "https://waifuvault.moe/assets/custom/images/08.png",
+		File: fileStruc,
 	})
 	if err != nil {
 		return
@@ -64,39 +71,13 @@ To Upload a file, use the `UploadFile` function. This function takes the followi
 
 | Option            | Type       | Description                                                               | Required                                       | Extra info                                                                        |
 |-------------------|------------|---------------------------------------------------------------------------|------------------------------------------------|-----------------------------------------------------------------------------------|
-| `File`            | `*os.File` | The file to upload. This is an *os.File                                   | true only if `Url` or `Bytes` is not supplied  | If `Url` or `Bytes` is supplied, this prop can't be set                           |
-| `Url`             | `string`   | The URL to a file that exists on the internet                             | true only if `File` or `Bytes` is not supplied | If `File` or `Bytes` is supplied, this prop can't be set                          |
-| `Bytes`           | `*[]byte`  | The raw Bytes to of the file to upload.                                   | true only if `File` or `Url` is not supplied   | If `File` or `Url` is supplied, this prop can't be set and `FileName` MUST be set |
+| `File`            | `*os.File` | The file to upload. This is an *os.File                                   | true only if `Bytes` is not supplied           | If `Bytes` is supplied, this prop can't be set                                    |
+| `Bytes`           | `*[]byte`  | The raw Bytes to of the file to upload.                                   | true only if `File` is not supplied            | If `File` is supplied, this prop can't be set and `FileName` MUST be set          |
 | `Expires`         | `string`   | A string containing a number and a unit (1d = 1day)                       | false                                          | Valid units are `m`, `h` and `d`                                                  |
 | `HideFilename`    | `bool`     | If true, then the uploaded filename won't appear in the URL               | false                                          | Defaults to `false`                                                               |
 | `Password`        | `string`   | If set, then the uploaded file will be encrypted                          | false                                          |                                                                                   |
 | `FileName`        | `string`   | Only used if `Bytes` is set, this will be the filename used in the upload | true only if `Bytes` is set                    |                                                                                   |
 | `OneTimeDownload` | `bool`     | if supplied, the file will be deleted as soon as it is accessed           | false                                          |                                                                                   |
-
-Using a URL:
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"github.com/waifuvault/waifuVault-go-api/pkg"
-	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod" // namespace mod
-	"net/http"
-)
-
-func main() {
-	api := waifuVault.NewWaifuvaltApi(http.Client{})
-	file, err := api.UploadFile(context.TODO(), waifuMod.WaifuvaultPutOpts{
-		Url: "https://waifuvault.moe/assets/custom/images/08.png",
-	})
-	if err != nil {
-		return
-	}
-	fmt.Printf(file.URL) // the URL
-}
-```
 
 Using Bytes:
 
@@ -287,14 +268,20 @@ import (
 	"github.com/waifuvault/waifuVault-go-api/pkg"
 	waifuMod "github.com/waifuvault/waifuVault-go-api/pkg/mod"
 	"net/http"
+	"os"
 )
 
 func main() {
 	api := waifuVault.NewWaifuvaltApi(http.Client{})
 
+	fileStruc, err := os.Open("myCoolFile.jpg")
+	if err != nil {
+		fmt.Print(err)
+	}
+
 	// upload the file
 	file, err := api.UploadFile(context.TODO(), waifuMod.WaifuvaultPutOpts{
-		Url:      "https://waifuvault.moe/assets/custom/images/08.png",
+		File:     fileStruc,
 		Password: "foobar",
 	})
 
@@ -655,6 +642,7 @@ import (
 	waifuVault "github.com/waifuvault/waifuVault-go-api/pkg"
 	"github.com/waifuvault/waifuVault-go-api/pkg/mod"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -667,9 +655,14 @@ func main() {
 		fmt.Print(err)
 	}
 
+	fileStruc, err := os.Open("myCoolFile.jpg")
+	if err != nil {
+		fmt.Print(err)
+	}
+
 	// upload a file to the bucket
 	file, err := api.UploadFile(cx, mod.WaifuvaultPutOpts{
-		Url:         "https://waifuvault.moe/assets/custom/images/08.png",
+		File:        fileStruc,
 		BucketToken: bucket.Token,
 	})
 	if err != nil {
